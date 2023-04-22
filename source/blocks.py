@@ -20,7 +20,7 @@ class ResidualBlock(layers.Layer):
         self.norm1 = layers.LayerNormalization(epsilon=1e-5)
         self.norm2 = layers.LayerNormalization(epsilon=1e-5)
 
-        self.act1 = tf.keras.get_ac
+        self.act1 = tf.keras.activations.get(activation)
         self.conv1 = layers.Conv2D(output_dim, kernel_size=3, padding="same")
         self.act2 = layers.Activation(activation=activation)
         self.conv2 = layers.Conv2D(output_dim, kernel_size=3, padding="same")
