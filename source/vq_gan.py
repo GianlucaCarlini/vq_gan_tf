@@ -44,14 +44,14 @@ class VQ_Gan(tf.keras.models.Model):
             self.disc_optimizer = tf.keras.optimizers.Adam(learning_rate=1e-4)
 
         self.vq_vae = VQ_VAE(
-            input_shape=self.input_shape,
+            input_shape=self._input_shape,
             embed_dim=self.embed_dim,
             num_vectors=self.num_vectors,
             initial_dim=self.initial_dim,
         )
 
         self.discriminator = get_discriminator(
-            input_shape=self.input_shape,
+            input_shape=self._input_shape,
             num_layers=self.disc_num_layers,
             kernel_size=self.disc_kernel_size,
             initial_filters=self.disc_initial_filters,
@@ -107,10 +107,36 @@ class VQ_Gan(tf.keras.models.Model):
         self.generator_loss_tracker.update_state(gen_loss)
         self.discriminator_loss_tracker.update_state(disc_loss)
 
-        return {
-            "loss": self.total_loss_tracker.result(),
-            "generator_loss": self.discriminator_loss_tracker.result(),
-            "reconstruction_loss": self.reconstruction_loss_tracker.result(),
-            "discriminator_loss": self.discriminator_loss_tracker.result(),
-            "vq_vae_loss": self.vq_vae_loss_tracker.result(),
-        }
+        return {m.name: m.result() for m in self.metrics}
+
+    def test_step(self, inputs):
+
+        reconstructions = self.vq_vae(inputs, training=True)
+        disc_real_output = self.discriminator(inputs)
+        disc_gen_outputs = self.discriminator(reconstructions)
+
+        gen_loss = generator_loss(
+            y_true=inputs, y_pred=reconstructions, disc_output=disc_gen_outputs
+        )
+        vq_vae_loss = gen_loss + sum(self.vq_vae.losses)
+
+        disc_loss = discriminator_loss(disc_real_output, disc_gen_outputs)
+
+        # only used as metric
+        reconstruction_loss = l1_loss(y_true=inputs, y_pred=reconstructions)
+
+        total_loss = vq_vae_loss + disc_loss
+
+        self.total_loss_tracker.update_state(total_loss)
+        self.vq_vae_loss_tracker.update_state(sum(self.vq_vae.losses))
+        self.reconstruction_loss_tracker.update_state(reconstruction_loss)
+        self.generator_loss_tracker.update_state(gen_loss)
+        self.discriminator_loss_tracker.update_state(disc_loss)
+
+        return {m.name: m.result() for m in self.metrics}
+
+    def call(self, inputs, training=False):
+
+        x = self.vq_vae(inputs, training=training)
+
+        return x
