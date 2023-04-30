@@ -6,3 +6,4 @@
 *.pdf
 *.csv
 *.xls
+**/__pycache/
