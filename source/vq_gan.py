@@ -48,7 +48,7 @@ class VQ_Gan(tf.keras.models.Model):
             embed_dim=self.embed_dim,
             num_vectors=self.num_vectors,
             initial_dim=self.initial_dim,
-            depths=[1, 2, 2, 4],
+            depths=self.depths,
         )
 
         self.discriminator = get_discriminator(
