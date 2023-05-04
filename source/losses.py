@@ -19,7 +19,7 @@ def l1_loss(y_true, y_pred):
 
     return loss
 
-def generator_loss(y_true, y_pred, disc_output, beta=100):
+def generator_loss(y_true, y_pred, disc_output, beta=1e-2):
 
     ones = tf.ones_like(disc_output)
 
@@ -27,7 +27,7 @@ def generator_loss(y_true, y_pred, disc_output, beta=100):
 
     mae = l1_loss(y_true, y_pred)
 
-    total_loss = gan_loss + beta * mae
+    total_loss = beta * gan_loss + mae
 
     return total_loss
 

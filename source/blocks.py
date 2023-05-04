@@ -22,7 +22,7 @@ class ResidualBlock(layers.Layer):
 
         self.act1 = tf.keras.activations.get(activation)
         self.conv1 = layers.Conv2D(output_dim, kernel_size=3, padding="same")
-        self.act2 = layers.Activation(activation=activation)
+        self.act2 = tf.keras.activations.get(activation)
         self.conv2 = layers.Conv2D(output_dim, kernel_size=3, padding="same")
         self.proj = layers.Conv2D(output_dim, kernel_size=1)
 

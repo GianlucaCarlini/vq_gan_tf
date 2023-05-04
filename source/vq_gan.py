@@ -11,7 +11,7 @@ class VQ_Gan(tf.keras.models.Model):
     def __init__(
         self, input_shape, gen_optimizer=None, disc_optimizer=None, *args, **kwargs
     ):
-        super().__init__(*args, **kwargs)
+        super().__init__()
 
         self._input_shape = input_shape
         self.embed_dim = kwargs.get("embed_dim", 8)
@@ -48,6 +48,7 @@ class VQ_Gan(tf.keras.models.Model):
             embed_dim=self.embed_dim,
             num_vectors=self.num_vectors,
             initial_dim=self.initial_dim,
+            depths=[1, 2, 2, 4],
         )
 
         self.discriminator = get_discriminator(
@@ -80,7 +81,7 @@ class VQ_Gan(tf.keras.models.Model):
             )
             vq_vae_loss = gen_loss + sum(self.vq_vae.losses)
 
-            disc_loss = discriminator_loss(disc_real_output, disc_gen_outputs)
+            disc_loss = 0.05 * discriminator_loss(disc_real_output, disc_gen_outputs)
 
             # only used as metric
             reconstruction_loss = l1_loss(y_true=inputs, y_pred=reconstructions)
@@ -120,7 +121,7 @@ class VQ_Gan(tf.keras.models.Model):
         )
         vq_vae_loss = gen_loss + sum(self.vq_vae.losses)
 
-        disc_loss = discriminator_loss(disc_real_output, disc_gen_outputs)
+        disc_loss = 0.05 * discriminator_loss(disc_real_output, disc_gen_outputs)
 
         # only used as metric
         reconstruction_loss = l1_loss(y_true=inputs, y_pred=reconstructions)

@@ -5,9 +5,13 @@ from tensorflow.keras import layers
 
 def get_encoder(input_shape, initial_dim=64, embed_dim=16, depths=[2, 2, 2, 3]):
 
-    input = layers.Input(shape=input_shape, name="Input")
+    input = layers.Input(shape=input_shape, name="Encoder_Input")
     x = layers.Conv2D(
-        initial_dim, kernel_size=3, strides=1, padding="same", name="InitialConv"
+        initial_dim,
+        kernel_size=3,
+        strides=1,
+        padding="same",
+        name="Encoder_InitialConv",
     )(input)
 
     for i in range(len(depths)):
@@ -16,7 +20,7 @@ def get_encoder(input_shape, initial_dim=64, embed_dim=16, depths=[2, 2, 2, 3]):
 
         for j in range(depths[i]):
             x = ResidualBlock(
-                initial_dim * factor, name=f"layer_{i}_ResidualBlock_{j}"
+                initial_dim * factor, name=f"Encoder_layer_{i}_ResidualBlock_{j}"
             )(x)
 
         if i < len(depths) - 1:
@@ -25,25 +29,31 @@ def get_encoder(input_shape, initial_dim=64, embed_dim=16, depths=[2, 2, 2, 3]):
                 kernel_size=3,
                 strides=2,
                 padding="same",
-                name=f"layer_{i}_DownSampling",
+                name=f"Encoder_layer_{i}_DownSampling",
             )(x)
 
-    x = layers.LayerNormalization(epsilon=1e-6, name="FinalLN")(x)
-    x = layers.Activation(activation="linear", name="FinalAct")(x)
+    x = layers.LayerNormalization(epsilon=1e-6, name="Encoder_FinalLN")(x)
+    x = layers.Activation(activation="linear", name="Encoder_FinalAct")(x)
 
-    x = layers.Conv2D(embed_dim, kernel_size=3, padding="same", name="FinalConv")(x)
-    out = layers.Conv2D(embed_dim, kernel_size=1, name="Embedding")(x)
+    x = layers.Conv2D(
+        embed_dim, kernel_size=3, padding="same", name="Encoder_FinalConv"
+    )(x)
+    out = layers.Conv2D(embed_dim, kernel_size=1, name="Encoder_Embedding")(x)
 
-    encoder = tf.keras.models.Model(inputs=input, outputs=out, name='Encoder')
+    encoder = tf.keras.models.Model(inputs=input, outputs=out, name="Encoder")
 
     return encoder
 
 
 def get_decoder(input_shape, initial_dim=512, depths=[3, 2, 2, 2]):
 
-    input = layers.Input(shape=input_shape, name="Input")
+    input = layers.Input(shape=input_shape, name="Decoder_Input")
     x = layers.Conv2D(
-        input.shape[-1], kernel_size=1, strides=1, padding="same", name="InitialConv"
+        input.shape[-1],
+        kernel_size=1,
+        strides=1,
+        padding="same",
+        name="Decoder_InitialConv",
     )(input)
 
     for i in range(len(depths)):
@@ -52,21 +62,24 @@ def get_decoder(input_shape, initial_dim=512, depths=[3, 2, 2, 2]):
 
         for j in range(depths[i]):
             x = ResidualBlock(
-                initial_dim // factor, name=f"layer_{i}_ResidualBlock_{j}"
+                initial_dim // factor, name=f"Decoder_layer_{i}_ResidualBlock_{j}"
             )(x)
 
         if i < len(depths) - 1:
-            x = layers.UpSampling2D(interpolation="bilinear")(x)
+            x = layers.UpSampling2D(
+                interpolation="bilinear", name=f"Decoder_layer{i}_Upsampling{j}"
+            )(x)
 
-    x = layers.LayerNormalization(epsilon=1e-6, name="FinalLN")(x)
-    x = layers.Activation(activation="linear", name="FinalAct")(x)
+    x = layers.LayerNormalization(epsilon=1e-6, name="Decoder_FinalLN")(x)
+    x = layers.Activation(activation="linear", name="Decoder_FinalAct")(x)
 
     # x = layers.Conv2D(16, kernel_size=3, padding='same', name='FinalConv')(x)
-    out = layers.Conv2D(3, kernel_size=1, name="Embedding", dtype=tf.float32)(x)
+    out = layers.Conv2D(3, kernel_size=1, name="Decoder_Embedding", dtype=tf.float32)(x)
 
-    decoder = tf.keras.models.Model(inputs=input, outputs=out, name='Decoder')
+    decoder = tf.keras.models.Model(inputs=input, outputs=out, name="Decoder")
 
     return decoder
+
 
 class VQ_VAE(tf.keras.models.Model):
     def __init__(
@@ -136,4 +149,4 @@ class VQ_VAE(tf.keras.models.Model):
         x = self.vq_layer(x)
         x = self.decoder(x)
 
-        return x 
+        return x
